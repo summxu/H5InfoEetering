@@ -1,0 +1,33 @@
+.goods {
+  /deep/.van-grid {
+    display: flex;
+    justify-content: space-between;
+
+    .van-grid-item {
+      flex-basis: 49% !important;
+      width: 49% !important;
+      margin-bottom: 20px;
+
+      .van-grid-item__content {
+        padding: 0;
+      }
+    }
+  }
+
+  .info-center {
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+
+    p {
+      font-size: 30px;
+      color: #3c3c3c;
+      line-height: 1.5;
+    }
+
+    .price-num {
+      color: var(--ion-color-danger);
+    }
+
+  }
+}

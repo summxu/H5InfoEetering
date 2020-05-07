@@ -1,0 +1,150 @@
+#Person {
+  position: relative;
+  margin-top: -25px;
+
+  /* 弹出框内容 */
+  .dialog-centent {
+    padding: 30px 100px;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-between;
+
+    input {
+      width: 200px;
+
+    }
+  }
+
+  .person-bg {
+    background-image: url('../../assets/person/personbg.png');
+    height: 400px;
+    width: 100%;
+    background-size: contain;
+    position: fixed;
+    top: 85px;
+    z-index: 0;
+  }
+
+  .user-info {
+    margin: 0 30px 100px 30px;
+    padding-top: 70px;
+    margin-bottom: 400px;
+    display: flex;
+    height: 108px;
+    z-index: 0;
+    position: relative;
+
+    .right {
+      width: 30%;
+      display: flex;
+      flex-flow: column nowrap;
+      justify-content: space-around;
+      height: 100%;
+
+      img {
+        height: 30px;
+        width: 28px;
+        vertical-align: middle;
+        margin-right: 10px;
+      }
+
+      span {
+        font-size: 28px;
+        font-weight: 400;
+        color: rgba(255, 255, 255, 1);
+      }
+    }
+
+    .left {
+      width: 70%;
+
+      .info {
+        display: flex;
+        flex-flow: column nowrap;
+        justify-content: space-around;
+        height: 100%;
+      }
+
+      .nickname {
+        font-size: 36px;
+        font-weight: bold;
+        color: rgba(255, 255, 255, 1);
+      }
+
+      .phone {
+        font-size: 26px;
+        font-weight: 400;
+        color: rgba(255, 255, 255, 1);
+      }
+
+      img {
+        height: 100%;
+        width: 108px;
+        border-radius: 50%;
+        float: left;
+        margin-right: 15px;
+        object-fit: cover;
+      }
+    }
+  }
+
+  .wallet-2 {
+    margin-top: 25px !important;
+  }
+
+  .wallet {
+
+    z-index: 0;
+    position: relative;
+    margin: 0 30px;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 20px;
+
+    .top {
+      .line {
+        display: flex;
+        flex-flow: row nowrap;
+        justify-content: space-between;
+        padding: 10px 0;
+        box-sizing: border-box;
+        height: 70px;
+
+        .van-button {
+          height: 100%;
+          line-height: 100%;
+        }
+      }
+
+      .yue {
+        line-height: 62px;
+        font-size: 28px;
+        font-weight: 400;
+        color: rgba(244, 129, 44, 1);
+      }
+
+      .right {
+        position: absolute;
+        top: 50%;
+        transform: translate(0, -50%);
+        right: 30px;
+
+        img {
+          position: absolute;
+          width: 30px;
+          height: 21px;
+          left: 50%;
+          top: -25px;
+          transform: translate(-50%, 0);
+        }
+
+      }
+    }
+  }
+
+  .options {
+    .van-cell-group {
+      margin: 30px;
+    }
+  }
+}
