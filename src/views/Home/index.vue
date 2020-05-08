@@ -40,7 +40,13 @@
               label="货物名称"
             >
               <template #input>
-                <Select v-model="item.goods_name" filterable placeholder="请选择">
+                <Select
+                  reserve-keyword
+                  @blur="selectBlur"
+                  v-model="item.goods_name"
+                  filterable
+                  placeholder="请选择"
+                >
                   <Option
                     v-for="item in goods"
                     :key="item.id"
@@ -86,16 +92,6 @@
           <CellGroup title="货物图片">
             <Uploader v-model="item.fileList" multiple :max-count="5" />
           </CellGroup>
-
-          <!-- goods -->
-          <Popup v-model="item.showPicker" position="bottom">
-            <Picker
-              show-toolbar
-              :columns="goods"
-              @cancel="item.showPicker = false"
-              @confirm="onConfirm"
-            />
-          </Popup>
         </CollapseItem>
       </Collapse>
       <div class="margin-y"></div>
@@ -224,14 +220,8 @@ export default {
         console.log(error);
       }
     },
-    onConfirm (value) {
-      // 找到itemList
-      var temp = this.itemList.find((item, index) => index === this.tempItem.index)
-      // 带入预设数据
-      temp.goods_name = value.goods_name
-      temp.price = value.price
-      temp.value = value.text
-      temp.showPicker = false
+    selectBlur (event) {
+      console.log(event)
     },
     uploader () {
       let imagesPath = []
