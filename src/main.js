@@ -11,7 +11,6 @@ import i18n from "./i18n/index";
 import VueI18n from "vue-i18n";
 import Viewer from 'v-viewer'
 import 'viewerjs/dist/viewer.css'
-import VueClipboard from 'vue-clipboard2'
 
 import { Image, Lazyload } from 'vant';
 Vue.use(Image).use(Lazyload).use(Viewer);
@@ -22,9 +21,6 @@ Vue.config.productionTip = false
 Vue.use(VueI18n, {
   i18n: (key, value) => i18n.t(key, value)
 });
-
-/* 剪切板 */
-Vue.use(VueClipboard)
 
 /* 加载物理返回键 */
 import "@/utils/handleBackButton";

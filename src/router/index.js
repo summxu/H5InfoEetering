@@ -3,11 +3,10 @@
  * @Date: 2020-01-17 15:13:27
  * @LastEditTime: 2020-03-14 10:05:49
  */
-import Vue from 'vue'
-import VueRouter from 'vue-router'
-import Home from '@/views/Home'
 import store from "@/store";
 import { Toast } from "vant";
+import Vue from 'vue';
+import VueRouter from 'vue-router';
 
 Vue.use(VueRouter)
 

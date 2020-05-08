@@ -16,9 +16,28 @@ export function pwdLogin (params) {
   })
 }
 
+// 注册
 export function register (params) {
   return request({
     url: '/api/User/reg',
+    method: 'POST',
+    params
+  })
+}
+
+// 商品检索列表
+export function goodsSearch (params) {
+  return request({
+    url: '/api/Goods/search',
+    method: 'GET',
+    params
+  })
+}
+
+// 客户提交订单接口
+export function orderAdd (params) {
+  return request({
+    url: '/api/Goods/order',
     method: 'POST',
     params
   })

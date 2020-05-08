@@ -5,71 +5,107 @@
  -->
 <template>
   <div id="TaskAdd">
-    <NavBar @click-left="onClickLeft" title="订单录入" />
+    <NavBar title="订单录入" @click-right="addItem" right-text="增加货物" />
+    <Form @submit="submit" @failed="failed">
+      <Collapse v-model="activeName" accordion>
+        <CollapseItem
+          v-for="(item,index) in itemList"
+          :key="index"
+          :title="'货物'+(index+1)"
+          :name="index"
+        >
+          <!-- 右侧按钮 -->
+          <template #value>
+            <Button
+              style="border:none;color:red;height:20px"
+              text="移除"
+              size="small"
+              @click.stop="delItem(index)"
+              plain
+              round
+            />
+          </template>
+          <CellGroup title="货物信息">
+            <Field
+              readonly
+              clickable
+              label="货物模板"
+              :value="value"
+              @click="item.showPicker = true;tempItem = {...item,index}"
+              placeholder="可不选择预设模板"
+            />
+            <Field
+              label="货物名称"
+              clearable
+              v-model="item.goods_name"
+              :rules="[{ required:true, message: '请输入货物名称' }]"
+            />
+            <Field
+              clearable
+              label="规格/型号"
+              type="text"
+              v-model="item.option"
+              :rules="[{ required:true, message: '请输入规格/型号' }]"
+            />
+            <Field
+              clearable
+              label="数量"
+              type="number"
+              v-model="item.num"
+              :rules="[{ required:true, message: '请输入数量' }]"
+            />
+            <Field
+              clearable
+              label="单价"
+              type="number"
+              v-model="item.price"
+              :rules="[{ required:true, message: '请输入单价' }]"
+            >
+              <template #right-icon>
+                <span>RMB</span>
+              </template>
+            </Field>
+          </CellGroup>
 
-    <VanCollapse v-model="activeName" accordion>
-      <VanCollapseItem title="标题1" :name="0">
-        <CellGroup title="基本信息">
-          <Field label="任务名称" maxlength="6" v-model="form.name" placeholder="请输入任务名称" />
-          <Field
-            readonly
-            clickable
-            label="任务分类"
-            :value="value"
-            @click="showPicker = true"
-            placeholder="请选择任务分类"
-          />
-          <Field
-            readonly
-            clickable
-            label="任务级别"
-            :value="level"
-            @click="showPicker1 = true"
-            placeholder="请选择任务级别"
-          />
-          <Field label="悬赏金额" type="number" v-model="form.price" placeholder="请输入悬赏金额" />
-          <Field label="数量" type="number" v-model="form.num" placeholder="请输入数量" />
-          <Field
-            label="任务要求"
-            :autosize=" { maxHeight: 150, minHeight: 100 }"
-            type="textarea"
-            v-model="form.info"
-            placeholder="请输入任务要求"
-          />
-        </CellGroup>
+          <CellGroup title="货物图片">
+            <Uploader v-model="item.fileList" multiple :max-count="5" />
+          </CellGroup>
 
-        <CellGroup title="任务图片">
-          <Uploader v-model="fileList" multiple :max-count="5" />
-        </CellGroup>
-      </VanCollapseItem>
-    </VanCollapse>
+          <!-- goods -->
+          <Popup v-model="item.showPicker" position="bottom">
+            <Picker
+              show-toolbar
+              :columns="goods"
+              @cancel="item.showPicker = false"
+              @confirm="onConfirm"
+            />
+          </Popup>
+        </CollapseItem>
+      </Collapse>
+      <div class="margin-y"></div>
 
+      <div class="page-inner-full">
+        <Button
+          type="info"
+          native-type="submit"
+          :loading="loading"
+          :disabled="loading"
+          loading-text="提交中..."
+          block
+        >确定发布</Button>
+      </div>
+    </Form>
     <div class="margin-y"></div>
-
-    <div class="page-inner-full">
-      <Button
-        type="info"
-        @click="submitBefore"
-        :loading="loading"
-        :disabled="loading"
-        loading-text="提交中..."
-        block
-      >确定发布</Button>
-    </div>
-
-    <!-- fenlei  -->
-    <Popup v-model="showPicker" position="bottom">
-      <Picker show-toolbar :columns="columns" @cancel="showPicker = false" @confirm="onConfirm" />
-    </Popup>
-    <!-- jiebie  -->
-    <Popup v-model="showPicker1" position="bottom">
-      <Picker show-toolbar :columns="columns1" @cancel="showPicker1 = false" @confirm="onConfirm1" />
-    </Popup>
+    <div class="margin-y"></div>
+    <div class="margin-y"></div>
+    <div class="margin-y"></div>
+    <div class="margin-y"></div>
+    <div class="margin-y"></div>
   </div>
 </template>
 
 <script>
-import { renwuStatus, renwuLevel, renwuAdd, upload } from '@/axios/api'
+import { goodsSearch, renwuAdd, upload } from '@/axios/api'
 import {
   NavBar,
   Button,
@@ -79,8 +115,10 @@ import {
   Popup,
   Uploader,
   Toast,
-  VanCollapseItem,
-  VanCollapse
+  CollapseItem,
+  Collapse,
+  Dialog,
+  Form
 } from 'vant';
 import ShowPassword from "@/components/ShowPassword";
 export default {
@@ -94,67 +132,87 @@ export default {
     Picker,
     Popup,
     Uploader,
-    VanCollapseItem,
-    VanCollapse
+    CollapseItem,
+    Collapse,
+    Form
   },
   created () {
-    this.getrenwuStatus()
-    this.getrenwuLevel()
-    /* 是否编辑 */
-    if (this.$route.params.id) {
-      // this.getGoodsInfo()
-    }
+    this.goodsSearch()
   },
   data () {
     return {
       activeName: 0,
       active: 0,
-      showPicker: false,
-      showPicker1: false,
-      columns1: [],
       loading: false,
-      ShowPassword: false,
-      form: {},
+      itemList: [{
+        showPicker: false
+      }],
       value: '',
-      level: '',
-      columns: [],
-      fileList: []
+      goods: [],
+      tempItem: {}
     }
   },
   methods: {
+    // 验证不通过且没有展开项给提示
+    failed () {
+      if (this.activeName === '') {
+        this.confirmAlert()
+      }
+    },
+    // 表单提示信息
+    confirmAlert () {
+      let dialog = Dialog.alert({
+        title: '警告',
+        message: '您的货物订单里有未填项，请检查',
+        confirmButtonText: '确定',
+      })
+      return dialog
+    },
+    // 移除提示信息
+    confirm () {
+      let dialog = Dialog.confirm({
+        title: '警告',
+        message: '确定要移除当前货物吗，请谨慎操作 ！',
+        confirmButtonText: '移除',
+        confirmButtonColor: 'red',
+        cancelButtonText: '返回',
+      })
+      return dialog
+    },
+    // 移除货物
+    async delItem (index) {
+      try {
+        await this.confirm()
+        this.itemList.splice(index, 1)
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    // 增加货物
+    addItem () {
+      this.itemList.push({
+        showPicker: false
+      })
+    },
     //  methods init 
-    async getrenwuStatus () {
-      /* 获取任务分类 */
+    async goodsSearch () {
       try {
-        let res = await renwuStatus()
-        let column = res.data.map(item => ({ text: item.name, value: item.id }))
-        this.columns = column
+        let res = await goodsSearch()
+        this.goods = res.data.map(item => ({
+          ...item,
+          text: item.goods_name
+        }))
       } catch (error) {
         console.log(error);
       }
-    },
-    async getrenwuLevel () {
-      /* 获取任务等级 */
-      try {
-        let res = await renwuLevel()
-        let column = res.data.map(item => ({ text: item.name, value: item.id }))
-        this.columns1 = column
-      } catch (error) {
-        console.log(error);
-      }
-    },
-    onClickLeft () {
-      this.$router.go(-1)
     },
     onConfirm (value) {
-      this.value = value.text;
-      this.form.status_id = value.value
-      this.showPicker = false;
-    },
-    onConfirm1 (value) {
-      this.level = value.text;
-      this.form.level_id = value.value
-      this.showPicker1 = false;
+      // 找到itemList
+      var temp = this.itemList.find((item, index) => index === this.tempItem.index)
+      // 带入预设数据
+      temp.goods_name = value.goods_name
+      temp.price = value.price
+      temp.showPicker = false
     },
     async uploader () {
       let imagesPath = []
@@ -180,6 +238,7 @@ export default {
       this.ShowPassword = true
     },
     async submit (pay_password) {
+      console.log(123123123123)
       /* b表单提交 */
       this.ShowPassword = false
       this.loading = true
