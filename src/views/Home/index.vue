@@ -26,20 +26,36 @@
             />
           </template>
           <CellGroup title="货物信息">
-            <Field
+            <!-- <Field
               readonly
               clickable
               label="货物模板"
-              :value="value"
+              :value="item.value"
               @click="item.showPicker = true;tempItem = {...item,index}"
               placeholder="可不选择预设模板"
-            />
+            />-->
             <Field
+              :value="item.goods_name"
+              :rules="[{ required:true, message: '请输入货物名称' }]"
+              label="货物名称"
+            >
+              <template #input>
+                <Select v-model="item.goods_name" filterable placeholder="请选择">
+                  <Option
+                    v-for="item in goods"
+                    :key="item.id"
+                    :label="item.text"
+                    :value="item.text"
+                  ></Option>
+                </Select>
+              </template>
+            </Field>
+            <!-- <Field
               label="货物名称"
               clearable
               v-model="item.goods_name"
               :rules="[{ required:true, message: '请输入货物名称' }]"
-            />
+            />-->
             <Field
               clearable
               label="规格/型号"
@@ -105,7 +121,8 @@
 </template>
 
 <script>
-import { goodsSearch, renwuAdd, upload } from '@/axios/api'
+import { goodsSearch, orderAdd, upload } from '@/axios/api'
+import { Select, Option } from 'element-ui';
 import {
   NavBar,
   Button,
@@ -134,7 +151,9 @@ export default {
     Uploader,
     CollapseItem,
     Collapse,
-    Form
+    Form,
+    Select,
+    Option
   },
   created () {
     this.goodsSearch()
@@ -147,7 +166,6 @@ export default {
       itemList: [{
         showPicker: false
       }],
-      value: '',
       goods: [],
       tempItem: {}
     }
@@ -212,57 +230,44 @@ export default {
       // 带入预设数据
       temp.goods_name = value.goods_name
       temp.price = value.price
+      temp.value = value.text
       temp.showPicker = false
     },
-    async uploader () {
+    uploader () {
       let imagesPath = []
-      /* 筛选图片有 file 对象为上传 */
-      let uploaderQueue =
-        this.fileList
+
+      const uploaderQueue = this.itemList.map(element => {
+        element.fileList
+          // 筛选未上传的
           .filter(item => {
-            return item.file
+            return item.file // 筛选图片有 file 对象为上传
           })
-          .map((item) => {
+          // 多个文件用map
+          .map(async (item) => {
             let formdata = new FormData();
-            formdata.append("file", item.file);
-            return upload(formdata)
+            formdata.append("image", item.file);
+            try {
+              const res = await upload(formdata)
+              // 图片地址赋值给相应的itemList
+              element.upload_path = res.data.upload_path
+            } catch (error) {
+              console.log(error)
+            }
           })
-      return await Promise.all(uploaderQueue)
+      });
     },
-    submitBefore () {
-      /* 表单验证 */
-      if (this.form.num <= 0) {
-        Toast('数量不能小于1')
-        return false
-      }
-      this.ShowPassword = true
-    },
-    async submit (pay_password) {
-      console.log(123123123123)
+    async submit () {
       /* b表单提交 */
-      this.ShowPassword = false
       this.loading = true
       try {
-        let imagesPath = await this.uploader()
-        imagesPath = imagesPath.map(item => (
-          item.data.url
-        ))
-        /* 新增和编辑的图片结合 */
-        let olgImagePath =
-          this.fileList
-            .filter(item => item.url)
-            .map(item => item.url)
-        let sumImagesPath = [...olgImagePath, ...imagesPath]
-        // console.log(olgImagePath, imagesPath, sumImagesPath);
         let params = {
-          ...this.form,
-          image: sumImagesPath.toString(),
-          id: this.$route.params.id,
-          pay_password
+
         }
-        let res = await renwuAdd(params)
+        let res = await orderAdd(params)
         this.loading = false
-        this.$router.go(-1)
+        this.itemList = [{
+          showPicker: false
+        }]
         Toast.success(res.msg)
       } catch (error) {
         this.loading = false

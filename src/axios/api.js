@@ -42,3 +42,13 @@ export function orderAdd (params) {
     params
   })
 }
+
+
+// 通用上传
+export function upload (params) {
+  return request({
+    url: '/api/User/upload',
+    method: 'POST',
+    params
+  })
+}
