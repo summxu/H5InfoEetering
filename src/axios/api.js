@@ -52,3 +52,21 @@ export function upload (data) {
     data
   })
 }
+
+// 我的订单列表
+export function orderList (params) {
+  return request({
+    url: '/api/User/orderList',
+    method: 'GET',
+    params
+  })
+}
+
+// 获取订单详情
+export function order (params) {
+  return request({
+    url: '/api/Goods/order',
+    method: 'GET',
+    params
+  })
+}

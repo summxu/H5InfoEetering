@@ -29,8 +29,8 @@ export default {
       loading: false,
       finished: false,
       queryParams: {
-        p: 1,
-        row: 10
+        page: 1,
+        count: 10
       }
     };
   },
@@ -41,7 +41,6 @@ export default {
   },
   watch: {
     refresh () {
-      console.log(this.refresh)
       if (this.refresh != 0) {
         this.onRefresh()
       }
@@ -49,7 +48,7 @@ export default {
   },
   methods: {
     async onRefresh () {
-      this.queryParams.p = 1
+      this.queryParams.page = 1
       this.isLoading = false;
       this.finished = false;
       /* 这里不知道怎么回事。之前是注释了的 */
@@ -65,7 +64,7 @@ export default {
       let data = res.data
 
       /* 页码为1 */
-      if (tempParams.p === 1) {
+      if (tempParams.page === 1) {
         this.list = []
       }
 
@@ -76,7 +75,7 @@ export default {
           this.list.push(item)
         })
 
-        if (data.length < this.queryParams.row) {
+        if (data.length < this.queryParams.count) {
           this.finished = true;
         }
       } else {
@@ -85,7 +84,7 @@ export default {
           this.list.push(item)
         })
 
-        if (data.list.length < this.queryParams.row) {
+        if (data.list.length < this.queryParams.count) {
           this.finished = true;
         }
 
@@ -99,7 +98,7 @@ export default {
       // 加载状态结束
       this.loading = false;
 
-      this.queryParams.p += 1
+      this.queryParams.page += 1
 
     }
   }
