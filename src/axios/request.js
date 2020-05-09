@@ -11,7 +11,7 @@ import store from "@/store";
 const service = axios.create({
   // baseURL: 'http://111.230.6.126:999',
   headers: {
-    'Content-Type': 'application/www-form-urlencoded'
+    'Content-Type': 'application/json'
   },
   timeout: 50000
 })

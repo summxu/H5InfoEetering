@@ -6,7 +6,7 @@
  */
 import request from '@/axios/request'
 import Axios from "axios";
-
+export const baseURL = "http://wxshop.aiquanyouxuan.vip"
 /* 登录 */
 export function pwdLogin (params) {
   return request({
@@ -35,20 +35,20 @@ export function goodsSearch (params) {
 }
 
 // 客户提交订单接口
-export function orderAdd (params) {
+export function orderAdd (data) {
   return request({
     url: '/api/Goods/order',
     method: 'POST',
-    params
+    data
   })
 }
 
 
 // 通用上传
-export function upload (params) {
+export function upload (data) {
   return request({
     url: '/api/User/upload',
     method: 'POST',
-    params
+    data
   })
 }

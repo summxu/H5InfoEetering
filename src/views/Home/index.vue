@@ -26,14 +26,6 @@
             />
           </template>
           <CellGroup title="货物信息">
-            <!-- <Field
-              readonly
-              clickable
-              label="货物模板"
-              :value="item.value"
-              @click="item.showPicker = true;tempItem = {...item,index}"
-              placeholder="可不选择预设模板"
-            />-->
             <Field
               :value="item.goods_name"
               :rules="[{ required:true, message: '请输入货物名称' }]"
@@ -42,13 +34,16 @@
               <template #input>
                 <Select
                   reserve-keyword
-                  @blur="selectBlur"
+                  @focus="onFocus(item)"
+                  this.tempItem="item"
+                  @change="onChange"
+                  :filter-method="selectBlur"
                   v-model="item.goods_name"
+                  placeholder=" "
                   filterable
-                  placeholder="请选择"
                 >
                   <Option
-                    v-for="item in goods"
+                    v-for="item in options"
                     :key="item.id"
                     :label="item.text"
                     :value="item.text"
@@ -56,24 +51,18 @@
                 </Select>
               </template>
             </Field>
-            <!-- <Field
-              label="货物名称"
-              clearable
-              v-model="item.goods_name"
-              :rules="[{ required:true, message: '请输入货物名称' }]"
-            />-->
             <Field
               clearable
               label="规格/型号"
               type="text"
-              v-model="item.option"
+              v-model="item.attribute"
               :rules="[{ required:true, message: '请输入规格/型号' }]"
             />
             <Field
               clearable
               label="数量"
               type="number"
-              v-model="item.num"
+              v-model="item.count"
               :rules="[{ required:true, message: '请输入数量' }]"
             />
             <Field
@@ -90,7 +79,7 @@
           </CellGroup>
 
           <CellGroup title="货物图片">
-            <Uploader v-model="item.fileList" multiple :max-count="5" />
+            <Uploader :max-count="1" v-model="item.fileList" multiple />
           </CellGroup>
         </CollapseItem>
       </Collapse>
@@ -117,7 +106,7 @@
 </template>
 
 <script>
-import { goodsSearch, orderAdd, upload } from '@/axios/api'
+import { goodsSearch, orderAdd, upload, baseURL } from '@/axios/api'
 import { Select, Option } from 'element-ui';
 import {
   NavBar,
@@ -133,7 +122,6 @@ import {
   Dialog,
   Form
 } from 'vant';
-import ShowPassword from "@/components/ShowPassword";
 export default {
   name: 'TaskAdd',
   components: {
@@ -141,7 +129,6 @@ export default {
     Button,
     Field,
     CellGroup,
-    ShowPassword,
     Picker,
     Popup,
     Uploader,
@@ -160,9 +147,10 @@ export default {
       active: 0,
       loading: false,
       itemList: [{
-        showPicker: false
+        goods_image: ''
       }],
       goods: [],
+      options: [],
       tempItem: {}
     }
   },
@@ -204,9 +192,7 @@ export default {
     },
     // 增加货物
     addItem () {
-      this.itemList.push({
-        showPicker: false
-      })
+      this.itemList.push({ goods_image: '' })
     },
     //  methods init 
     async goodsSearch () {
@@ -220,44 +206,68 @@ export default {
         console.log(error);
       }
     },
-    selectBlur (event) {
-      console.log(event)
+    onFocus (item) {
+      this.tempItem = item
+      this.options = this.goods
     },
-    uploader () {
-      let imagesPath = []
-
-      const uploaderQueue = this.itemList.map(element => {
-        element.fileList
-          // 筛选未上传的
-          .filter(item => {
-            return item.file // 筛选图片有 file 对象为上传
-          })
-          // 多个文件用map
-          .map(async (item) => {
-            let formdata = new FormData();
-            formdata.append("image", item.file);
-            try {
-              const res = await upload(formdata)
-              // 图片地址赋值给相应的itemList
-              element.upload_path = res.data.upload_path
-            } catch (error) {
-              console.log(error)
-            }
-          })
-      });
+    onChange (val) {
+      this.tempItem.goods_name = val
+      const tempGood = this.goods.find(item => item.goods_name == val)
+      if (tempGood) {
+        this.tempItem.text = val
+        this.tempItem.price = tempGood.id
+        this.tempItem.attribute = tempGood.attribute
+        this.tempItem.count = tempGood.count
+        if (tempGood.goods_image) {
+          this.tempItem.fileList = [{ url: baseURL + tempGood.goods_image }]
+        } else {
+          this.tempItem.fileList = []
+        }
+      }
+    },
+    selectBlur (val) {
+      if (val) { //val存在
+        this.tempItem.goods_name = val
+        this.options = this.goods.filter((item) => item.text.indexOf(val) != -1)
+        this.options.unshift({ text: val, value: val })
+      } else { //val为空时，还原数组
+        this.options = this.goods;
+      }
     },
     async submit () {
       /* b表单提交 */
       this.loading = true
       try {
-        let params = {
 
+        // 先上传图片
+        for (let index = 0; index < this.itemList.length; index++) {
+          const element = this.itemList[index];
+          if (element.fileList && element.fileList.length) {
+            if (element.fileList[0].url) {
+              // 有图片直接传图片地址,替换图片地址
+              let tempURL = element.fileList[0].url.replace(baseURL, '')
+              element.goods_image = element.fileList[0].url
+              continue
+            }
+          }
+          let formdata = new FormData();
+          formdata.append("image", element.fileList[0].file);
+          const res = await upload(formdata)
+          // 图片地址赋值给相应的itemList
+          console.log(res.data.upload_path)
+          element.goods_image = res.data.upload_path
+        }
+
+        let goods = this.itemList.map(item => {
+          delete item.fileList
+          return item
+        })
+        let params = {
+          goods_info: goods
         }
         let res = await orderAdd(params)
         this.loading = false
-        this.itemList = [{
-          showPicker: false
-        }]
+        this.itemList = [{ goods_image: '' }]
         Toast.success(res.msg)
       } catch (error) {
         this.loading = false
