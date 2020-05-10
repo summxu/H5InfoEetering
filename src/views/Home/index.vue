@@ -348,9 +348,8 @@ export default {
         // 先上传图片
         for (let j = 0; j < this.parcelList.length; j++) {
           const item = this.parcelList[j];
-          for (let index = 0; index < item.length; index++) {
-            const element = item[index];
-
+          for (let index = 0; index < item.itemList.length; index++) {
+            const element = item.itemList[index];
             if (element.fileList && element.fileList.length) {
               if (element.fileList[0].url) {
                 // 有图片直接传图片地址,替换图片地址
@@ -359,6 +358,7 @@ export default {
                 continue
               }
             }
+            console.log(element)
             let formdata = new FormData();
             formdata.append("image", element.fileList[0].file);
             const res = await upload(formdata)
