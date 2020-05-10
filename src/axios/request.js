@@ -9,7 +9,7 @@ import router from "@/router/index";
 import store from "@/store";
 
 const service = axios.create({
-  // baseURL: 'http://111.230.6.126:999',
+  baseURL: 'http://wxshop.aiquanyouxuan.vip',
   headers: {
     'Content-Type': 'application/json'
   },

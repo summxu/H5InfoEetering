@@ -58,24 +58,25 @@
                 label="货物名称"
               >
                 <template #input>
-                  <Select
-                    reserve-keyword
-                    @focus="onFocus(item)"
-                    @change="onChange"
-                    :filter-method="selectBlur"
-                    v-model="item.goods_name"
-                    placeholder=" "
+                  <i-select
+                    @on-query-change="setItem(item)"
+                    @on-open-change="onFocus"
+                    @on-change="onChange"
+                    remote
                     filterable
+                    :remote-method="selectBlur"
+                    v-model="item.goods_name"
                   >
-                    <Option
+                    <i-option
                       v-for="item in options"
-                      :key="item.id"
-                      :label="item.text"
                       :value="item.text"
-                    ></Option>
-                  </Select>
+                      :key="item.text"
+                      :label="item.text"
+                    >{{ item.text }}</i-option>
+                  </i-select>
                 </template>
               </Field>
+
               <Field
                 @blur="deleteFun"
                 clearable
@@ -306,13 +307,15 @@ export default {
         console.log(error);
       }
     },
-
-    onFocus (item) {
+    setItem (item) {
       this.tempItem = item
-      this.options = this.goods
+    },
+    onFocus (is) {
+      if (is) {
+        this.options = this.goods
+      }
     },
     onChange (val) {
-
       this.tempItem.goods_name = val
       const tempGood = this.goods.find(item => item.goods_name == val)
       if (tempGood) {
@@ -329,12 +332,11 @@ export default {
       }
     },
     selectBlur (val) {
-      this.deleteFun()
       if (val) { //val存在
-        this.tempItem.goods_name = val
         this.options = this.goods.filter((item) => item.text.indexOf(val) != -1)
         if (!this.options.length) {
           this.options.unshift({ text: val, value: val })
+          this.$forceUpdate()
         }
       } else { //val为空时，还原数组
         this.options = this.goods;
