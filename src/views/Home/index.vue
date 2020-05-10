@@ -5,84 +5,154 @@
  -->
 <template>
   <div id="TaskAdd">
-    <NavBar title="订单录入" @click-right="addItem" right-text="增加货物" />
+    <NavBar title="订单录入" @click-right="addParce" right-text="增加包裹" />
     <Form @submit="submit" @failed="failed">
-      <Collapse v-model="activeName" accordion>
-        <CollapseItem
-          v-for="(item,index) in itemList"
-          :key="index"
-          :title="'货物'+(index+1)"
-          :name="index"
-        >
-          <!-- 右侧按钮 -->
-          <template #value>
+      <CellGroup :border="true" v-for="(element,j) in parcelList" :key="j">
+        <template #title>
+          <span class="group-title">包裹{{j+1}}</span>
+          <span class="red title-right">毛重（含纸箱）不得超过3kg</span>
+          <div class="group-header">
             <Button
-              style="border:none;color:red;height:20px"
-              text="移除"
+              style="border:none;height:20px"
+              text="增加货物"
+              native-type="button"
               size="small"
-              @click.stop="delItem(index)"
+              @click="addItem(j)"
               plain
               round
             />
-          </template>
-          <CellGroup title="货物信息">
-            <Field
-              :value="item.goods_name"
-              :rules="[{ required:true, message: '请输入货物名称' }]"
-              label="货物名称"
-            >
-              <template #input>
-                <Select
-                  reserve-keyword
-                  @focus="onFocus(item)"
-                  this.tempItem="item"
-                  @change="onChange"
-                  :filter-method="selectBlur"
-                  v-model="item.goods_name"
-                  placeholder=" "
-                  filterable
-                >
-                  <Option
-                    v-for="item in options"
-                    :key="item.id"
-                    :label="item.text"
-                    :value="item.text"
-                  ></Option>
-                </Select>
-              </template>
-            </Field>
-            <Field
-              clearable
-              label="规格/型号"
-              type="text"
-              v-model="item.attribute"
-              :rules="[{ required:true, message: '请输入规格/型号' }]"
+            <Button
+              style="border:none;color:red;height:20px"
+              text="移除包裹"
+              native-type="button"
+              size="small"
+              @click.stop="delParcel(j)"
+              plain
+              round
             />
-            <Field
-              clearable
-              label="数量"
-              type="number"
-              v-model="item.count"
-              :rules="[{ required:true, message: '请输入数量' }]"
-            />
-            <Field
-              clearable
-              label="单价"
-              type="number"
-              v-model="item.price"
-              :rules="[{ required:true, message: '请输入单价' }]"
-            >
-              <template #right-icon>
-                <span>RMB</span>
-              </template>
-            </Field>
-          </CellGroup>
+          </div>
+        </template>
+        <Collapse v-model="element.activeName" accordion>
+          <CollapseItem
+            v-for="(item,index) in parcelList[j].itemList"
+            :key="index"
+            :title="'货物'+(index+1)"
+            :name="index"
+          >
+            <!-- 右侧按钮 -->
+            <template #value>
+              <Button
+                style="border:none;color:red;height:20px"
+                native-type="button"
+                text="移除"
+                size="small"
+                @click.stop="delItem(j,index)"
+                plain
+                round
+              />
+            </template>
+            <CellGroup title="货物信息">
+              <Field
+                :value="item.goods_name"
+                :rules="[{ required:true, message: '请输入货物名称' }]"
+                label="货物名称"
+              >
+                <template #input>
+                  <Select
+                    reserve-keyword
+                    @focus="onFocus(item)"
+                    @change="onChange"
+                    :filter-method="selectBlur"
+                    v-model="item.goods_name"
+                    placeholder=" "
+                    filterable
+                  >
+                    <Option
+                      v-for="item in options"
+                      :key="item.id"
+                      :label="item.text"
+                      :value="item.text"
+                    ></Option>
+                  </Select>
+                </template>
+              </Field>
+              <Field
+                @blur="deleteFun"
+                clearable
+                label="规格/型号"
+                type="text"
+                v-model="item.attribute"
+                :rules="[{ required:true, message: '请输入规格/型号' }]"
+              />
+              <Field
+                clearable
+                @blur="deleteFun"
+                label="数量"
+                type="number"
+                v-model="item.count"
+                :rules="[{ required:true, message: '请输入数量' }]"
+              />
+              <Field
+                clearable
+                @blur="deleteFun"
+                label="单价"
+                type="number"
+                v-model="item.price"
+                :rules="[{ required:true, message: '请输入单价' }]"
+              >
+                <template #right-icon>
+                  <span>RMB</span>
+                </template>
+              </Field>
+            </CellGroup>
 
-          <CellGroup title="货物图片">
-            <Uploader :max-count="1" v-model="item.fileList" multiple />
-          </CellGroup>
-        </CollapseItem>
-      </Collapse>
+            <CellGroup title="货物图片（注：可不填写）">
+              <Uploader
+                @delete="deleteFun"
+                :after-read="deleteFun"
+                :max-count="1"
+                v-model="item.fileList"
+                multiple
+              />
+            </CellGroup>
+          </CollapseItem>
+        </Collapse>
+      </CellGroup>
+
+      <CellGroup title="收货信息">
+        <Field
+          clearable
+          label="收货人"
+          type="text"
+          :rules="[{ required:true, message: '请输入收货人' }]"
+          v-model="shouhuo.person"
+        />
+        <Field
+          clearable
+          label="手机号"
+          type="number"
+          :rules="[{ required:true, message: '请输入手机号' }]"
+          :maxlength="11"
+          v-model="shouhuo.phone"
+        />
+        <Field
+          clearable
+          label="收货地址"
+          type="text"
+          :rules="[{ required:true, message: '请输入收货地址' }]"
+          v-model="shouhuo.address"
+        />
+      </CellGroup>
+
+      <CellGroup title="身份证正面">
+        <Uploader
+          @delete="deleteFun"
+          :after-read="deleteFun"
+          :max-count="1"
+          v-model="card_front_image"
+        />
+      </CellGroup>
+
       <div class="margin-y"></div>
 
       <div class="page-inner-full">
@@ -143,9 +213,20 @@ export default {
   },
   data () {
     return {
-      activeName: 0,
       active: 0,
       loading: false,
+      shouhuo: {
+        person: '',
+        phone: '',
+        address: '',
+      },
+      card_front_image: [],
+      parcelList: [{
+        activeName: 0,
+        itemList: [{
+          goods_image: ''
+        }],
+      }],
       itemList: [{
         goods_image: ''
       }],
@@ -155,11 +236,13 @@ export default {
     }
   },
   methods: {
+    /* 删除函数 */
+    deleteFun () {
+      this.$forceUpdate()
+    },
     // 验证不通过且没有展开项给提示
     failed () {
-      if (this.activeName === '') {
-        this.confirmAlert()
-      }
+      this.confirmAlert()
     },
     // 表单提示信息
     confirmAlert () {
@@ -171,28 +254,45 @@ export default {
       return dialog
     },
     // 移除提示信息
-    confirm () {
+    confirm (name) {
       let dialog = Dialog.confirm({
         title: '警告',
-        message: '确定要移除当前货物吗，请谨慎操作 ！',
+        message: `确定要移除当前${name}吗，请谨慎操作 ！`,
         confirmButtonText: '移除',
         confirmButtonColor: 'red',
         cancelButtonText: '返回',
       })
       return dialog
     },
-    // 移除货物
-    async delItem (index) {
+    // 移除包裹
+    async delParcel (j) {
       try {
-        await this.confirm()
-        this.itemList.splice(index, 1)
+        await this.confirm('包裹')
+        this.parcelList.splice(j, 1)
       } catch (error) {
         console.log(error)
       }
     },
+    // 移除货物
+    async delItem (j, index) {
+      try {
+        await this.confirm('货物')
+        this.parcelList[j].itemList.splice(index, 1)
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    // 增加包裹
+    addParce () {
+      this.parcelList.push({
+        itemList: [{
+          goods_image: ''
+        }]
+      })
+    },
     // 增加货物
-    addItem () {
-      this.itemList.push({ goods_image: '' })
+    addItem (j) {
+      this.parcelList[j].itemList.push({ goods_image: '' })
     },
     //  methods init 
     async goodsSearch () {
@@ -206,11 +306,13 @@ export default {
         console.log(error);
       }
     },
+
     onFocus (item) {
       this.tempItem = item
       this.options = this.goods
     },
     onChange (val) {
+
       this.tempItem.goods_name = val
       const tempGood = this.goods.find(item => item.goods_name == val)
       if (tempGood) {
@@ -223,13 +325,17 @@ export default {
         } else {
           this.tempItem.fileList = []
         }
+        this.$forceUpdate()
       }
     },
     selectBlur (val) {
+      this.deleteFun()
       if (val) { //val存在
         this.tempItem.goods_name = val
         this.options = this.goods.filter((item) => item.text.indexOf(val) != -1)
-        this.options.unshift({ text: val, value: val })
+        if (!this.options.length) {
+          this.options.unshift({ text: val, value: val })
+        }
       } else { //val为空时，还原数组
         this.options = this.goods;
       }
@@ -240,34 +346,60 @@ export default {
       try {
 
         // 先上传图片
-        for (let index = 0; index < this.itemList.length; index++) {
-          const element = this.itemList[index];
-          if (element.fileList && element.fileList.length) {
-            if (element.fileList[0].url) {
-              // 有图片直接传图片地址,替换图片地址
-              let tempURL = element.fileList[0].url.replace(baseURL, '')
-              element.goods_image = element.fileList[0].url
-              continue
+        for (let j = 0; j < this.parcelList.length; j++) {
+          const item = this.parcelList[j];
+          for (let index = 0; index < item.length; index++) {
+            const element = item[index];
+
+            if (element.fileList && element.fileList.length) {
+              if (element.fileList[0].url) {
+                // 有图片直接传图片地址,替换图片地址
+                let tempURL = element.fileList[0].url.replace(baseURL, ' ')
+                element.goods_image = tempURL
+                continue
+              }
             }
+            let formdata = new FormData();
+            formdata.append("image", element.fileList[0].file);
+            const res = await upload(formdata)
+            // 图片地址赋值给相应的itemList
+            console.log(res.data.upload_path)
+            element.goods_image = res.data.upload_path
           }
-          let formdata = new FormData();
-          formdata.append("image", element.fileList[0].file);
-          const res = await upload(formdata)
-          // 图片地址赋值给相应的itemList
-          console.log(res.data.upload_path)
-          element.goods_image = res.data.upload_path
         }
 
-        let goods = this.itemList.map(item => {
-          delete item.fileList
-          return item
+
+        let goods = this.parcelList.map(item => {
+          return item.itemList.map(element => {
+            delete element.fileList
+            delete element.text
+            return element
+          })
         })
         let params = {
-          goods_info: goods
+          goods_info: goods,
+          card_front_image: '',
+          address: this.shouhuo.person + ' ' + this.shouhuo.phone + ' ' + this.shouhuo.address
         }
-        let res = await orderAdd(params)
+
+        if (this.card_front_image.length) {
+          // 先上传省份证
+          var formdata = new FormData();
+          formdata.append("image", this.card_front_image[0].file);
+          var res = await upload(formdata)
+          params.card_front_image = res.data.upload_path
+        }
+
+
+        var res = await orderAdd(params)
         this.loading = false
-        this.itemList = [{ goods_image: '' }]
+        this.parcelList = [{
+          activeName: 0,
+          itemList: [{
+            goods_image: ''
+          }],
+        }]
+        this.$router.push('order')
         Toast.success(res.msg)
       } catch (error) {
         this.loading = false

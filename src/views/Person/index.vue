@@ -52,10 +52,7 @@ export default {
     [Dialog.Component.name]: Dialog.Component,
     Stepper
   },
-  created () {
-    // component init
-    this.getPersonInfo()
-  },
+  created () { },
   computed: {
     ...mapState(['userInfo'])
   },
@@ -72,7 +69,7 @@ export default {
   },
   methods: {
     /* 同步用户信息 */
-    ...mapActions(['syncUserInfo', 'getPersonInfo', 'logOut'])
+    ...mapActions(['logOut'])
   }
 }
 </script>

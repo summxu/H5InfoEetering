@@ -8,16 +8,21 @@
     <NavBar title="订单列表" />
     <div class="MyGoodsInner margin-top-up">
       <Tabs @change="tabChange" v-model="active">
-        <Tab title="待付款">
+        <Tab v-for="(element,index) in tabs " :key="index" :title="element.title">
           <DataList
+            v-if="active == index"
             :refresh="refreshList"
             @setData="setData"
             :request="require('@/axios/api.js').orderList"
           >
-            <CellGroup v-for="item in list" :key="item.id" :title="'订单编号：'+item.out_trade_no">
+            <CellGroup
+              v-for="item in filterList(element.status)"
+              :key="item.id"
+              :title="'订单编号：'+item.out_trade_no"
+            >
               <Cell
                 icon="point-gift"
-                :title="item.goods_info.length ? item.goods_info[0].goods_name + '....':'没有货物'"
+                :title="item.goods_info.length +'个包裹'"
                 :value="item.create_time"
                 is-link
                 :to="`detail/${item.id}`"
@@ -64,9 +69,36 @@ export default {
       refreshList: 0,
       list: [],
       order_id: '',
+      tabs: [{
+        title: '全部',
+        status: [0, 1, 2, 3, 4, 5, 6, 7]
+      }, {
+        title: '审核中',
+        status: [0]
+      }, {
+        title: '已驳回',
+        status: [1]
+      }, {
+        title: '待发货',
+        status: [2]
+      }, {
+        title: '发货中',
+        status: [2, 3]
+      }, {
+        title: '待出库',
+        status: [4]
+      }, {
+        title: '已完成',
+        status: [7]
+      }]
     }
   },
   methods: {
+    filterList (arr) {
+      return this.list.filter(item => {
+        return arr.findIndex(element => element == item.status) != -1
+      })
+    },
     setData (data) {
       this.list = data.list
     },

@@ -5,40 +5,88 @@
  -->
 <template>
   <div id="TaskAdd">
-    <NavBar title="订单详情" />
-    <Collapse v-model="activeName" accordion>
-      <CollapseItem
-        v-for="(item,index) in itemList"
-        :key="index"
-        :title="'货物'+(index+1)"
-        :name="index"
-      >
-        <CellGroup title="货物信息">
-          <Cell :value="item.goods_name" title="货物名称" />
-          <Cell title="规格/型号" :value="item.attribute" />
-          <Cell title="数量" :value="item.count" />
-          <Cell title="单价" :value="item.price">
-            <template #right-icon>
-              <span>RMB</span>
-            </template>
-          </Cell>
-        </CellGroup>
+    <NavBar @click-left="$router.go(-1)" left-arrow left-text="返回" title="订单详情" />
+    <CellGroup
+      v-for="(element,j) in orderItem.goods_info"
+      :key="element.package_id"
+      :title="'包裹'+(j+1)"
+    >
+      <Collapse v-model="activeName" accordion>
+        <CollapseItem
+          v-for="(item,index) in element.goods"
+          :key="index"
+          :title="'货物'+(index+1)"
+          :name="index"
+        >
+          <CellGroup title="货物信息">
+            <Cell :value="item.goods_name" title="货物名称" />
+            <Cell title="规格/型号" :value="item.attribute" />
+            <Cell title="数量" :value="item.count" />
+            <Cell v-if="item.address" title="地址" :value="item.address" />
+            <Cell title="单价" :value="item.price">
+              <template #right-icon>
+                <span>RMB</span>
+              </template>
+            </Cell>
+            <Cell title="货物图片">
+              <template #default>
+                <VanImage width="50" height="50" :src="item.goods_image" />
+              </template>
+            </Cell>
+          </CellGroup>
+        </CollapseItem>
+      </Collapse>
+    </CellGroup>
 
-        <CellGroup title="货物图片">
-          <Uploader :max-count="1" :value="item.fileList" multiple />
-        </CellGroup>
-      </CollapseItem>
-    </Collapse>
+    <!-- 物流回显 -->
+    <CellGroup v-if="orderItem.express_no" title="物流信息">
+      <Cell title="快递单号" type="text" :value="orderItem.express_no" />
+    </CellGroup>
+    <!-- 收回地址回显 -->
+    <CellGroup title="收货信息">
+      <Cell title="收货地址" type="text" :value="orderItem.address" />
+    </CellGroup>
+
+    <!-- 照片回显 -->
+    <CellGroup title="身份信息">
+      <Cell title="身份证正面">
+        <template #default>
+          <VanImage width="50" height="50" :src="baseURL+orderItem.card_front_image" />
+        </template>
+      </Cell>
+    </CellGroup>
+
+    <CellGroup v-if="orderItem.status == 2" title="物流信息">
+      <Field clearable label="快递单号" type="text" v-model="wuliu" />
+    </CellGroup>
+
+    <CellGroup v-if="orderItem.status == 1" title="收货信息">
+      <Field clearable label="收货人" type="text" v-model="shouhuo.person" />
+      <Field clearable label="手机号" type="text" v-model="shouhuo.phone" />
+      <Field clearable label="收货地址" type="text" v-model="shouhuo.address" />
+    </CellGroup>
+
+    <CellGroup v-if="orderItem.status == 1" title="身份证正面">
+      <Uploader
+        @delete="deleteFun"
+        :after-read="deleteFun"
+        :max-count="1"
+        v-model="fileList.card_front_image"
+      />
+    </CellGroup>
+
     <div class="margin-y"></div>
 
-    <Button
-      type="info"
-      native-type="submit"
-      :loading="loading"
-      :disabled="loading"
-      loading-text="提交中..."
-      block
-    >确定发布</Button>
+    <div v-if=" orderItem.status == 2 " class="page-inner-full">
+      <Button
+        type="info"
+        @click="submit"
+        :loading="loading"
+        :disabled="loading"
+        loading-text="提交中..."
+        block
+      >确定提交</Button>
+    </div>
     <div class="margin-y"></div>
     <div class="margin-y"></div>
     <div class="margin-y"></div>
@@ -49,8 +97,8 @@
 </template>
 
 <script>
-import { goodsSearch, orderAdd, upload, baseURL } from '@/axios/api'
-import { Select, Option } from 'element-ui';
+import { order, upload, orderAddress, orderExpress } from '@/axios/api'
+import { baseURL } from "@/axios/api.js";
 import {
   NavBar,
   Button,
@@ -63,7 +111,9 @@ import {
   CollapseItem,
   Collapse,
   Dialog,
-  Form
+  Form,
+  Field,
+  Image as VanImage
 } from 'vant';
 export default {
   name: 'TaskAdd',
@@ -78,139 +128,106 @@ export default {
     CollapseItem,
     Collapse,
     Form,
-    Select,
-    Option
+    VanImage,
+    Field
   },
   created () {
-    this.goodsSearch()
+
+    this.id = this.$route.params.id
+    this.order()
   },
   data () {
     return {
+      id: 0,
       activeName: 0,
       active: 0,
       loading: false,
-      itemList: [{
-        goods_image: ''
-      }],
+      orderItem: [],
       goods: [],
       options: [],
-      tempItem: {}
+      tempItem: {},
+      fileList: {},
+      baseURL: baseURL,
+      wuliu: '',
+      shouhuo: {
+        person: '',
+        phone: '',
+        address: ''
+      }
     }
   },
   methods: {
-    // 验证不通过且没有展开项给提示
-    failed () {
-      if (this.activeName === '') {
-        this.confirmAlert()
-      }
-    },
-    // 表单提示信息
-    confirmAlert () {
-      let dialog = Dialog.alert({
-        title: '警告',
-        message: '您的货物订单里有未填项，请检查',
-        confirmButtonText: '确定',
-      })
-      return dialog
-    },
-    // 移除提示信息
-    confirm () {
-      let dialog = Dialog.confirm({
-        title: '警告',
-        message: '确定要移除当前货物吗，请谨慎操作 ！',
-        confirmButtonText: '移除',
-        confirmButtonColor: 'red',
-        cancelButtonText: '返回',
-      })
-      return dialog
-    },
-    // 移除货物
-    async delItem (index) {
-      try {
-        await this.confirm()
-        this.itemList.splice(index, 1)
-      } catch (error) {
-        console.log(error)
-      }
-    },
-    // 增加货物
-    addItem () {
-      this.itemList.push({ goods_image: '' })
+    /* 删除函数 */
+    deleteFun () {
+      this.$forceUpdate()
     },
     //  methods init 
-    async goodsSearch () {
+    async order () {
       try {
-        let res = await goodsSearch()
-        this.goods = res.data.map(item => ({
-          ...item,
-          text: item.goods_name
-        }))
+        let res = await order({ id: this.id })
+        if (res.data.status == 1) {
+          await this.Alert(res.data.audit_msg)
+          this.$router.replace('/')
+          throw new Error('订单驳回')
+        }
+        res.data.goods_info.forEach(item => {
+          item.fileList = [{ url: item.goods_image }]
+        })
+        this.orderItem = res.data
+        this.wuliu = res.data.express_no
       } catch (error) {
         console.log(error);
       }
     },
-    onFocus (item) {
-      this.tempItem = item
-      this.options = this.goods
+    // 表单提示信息
+    Alert (msg) {
+      let dialog = Dialog.alert({
+        title: '警告',
+        message: '您的货物订单被驳回\n' + msg + '\n' + '请重新提交订单',
+        confirmButtonText: '确定',
+      })
+      return dialog
     },
-    onChange (val) {
-      this.tempItem.goods_name = val
-      const tempGood = this.goods.find(item => item.goods_name == val)
-      if (tempGood) {
-        this.tempItem.text = val
-        this.tempItem.price = tempGood.id
-        this.tempItem.attribute = tempGood.attribute
-        this.tempItem.count = tempGood.count
-        if (tempGood.goods_image) {
-          this.tempItem.fileList = [{ url: baseURL + tempGood.goods_image }]
-        } else {
-          this.tempItem.fileList = []
-        }
-      }
-    },
-    selectBlur (val) {
-      if (val) { //val存在
-        this.tempItem.goods_name = val
-        this.options = this.goods.filter((item) => item.text.indexOf(val) != -1)
-        this.options.unshift({ text: val, value: val })
-      } else { //val为空时，还原数组
-        this.options = this.goods;
-      }
+    Alert1 (msg) {
+      let dialog = Dialog.alert({
+        title: '警告',
+        message: '请上传您的身份证信息',
+        confirmButtonText: '确定',
+      })
+      return dialog
     },
     async submit () {
       /* b表单提交 */
       this.loading = true
       try {
-
-        // 先上传图片
-        for (let index = 0; index < this.itemList.length; index++) {
-          const element = this.itemList[index];
-          if (element.fileList && element.fileList.length) {
-            if (element.fileList[0].url) {
-              // 有图片直接传图片地址,替换图片地址
-              let tempURL = element.fileList[0].url.replace(baseURL, '')
-              element.goods_image = element.fileList[0].url
-              continue
-            }
+        if (this.orderItem.status == 2) {
+          // 待发货
+          var params = {
+            id: this.id,
+            express_no: this.wuliu
           }
-          let formdata = new FormData();
-          formdata.append("image", element.fileList[0].file);
-          const res = await upload(formdata)
-          // 图片地址赋值给相应的itemList
-          console.log(res.data.upload_path)
-          element.goods_image = res.data.upload_path
+          var res = await orderExpress(params)
         }
+        if (this.orderItem.status == 1) {
+          // 实名认证 修改驳回信息的实名认证
+          var params = {
+            id: this.id,
+            address: this.shouhuo.person + '--' + this.shouhuo.phone + '--' + this.shouhuo.address
+          }
+          if (!this.fileList.card_front_image) {
+            await this.Alert1()
+            throw new Error('未上传图片')
+          }
+          // 先上传图片
+          var formdata = new FormData();
+          formdata.append("image", this.fileList.card_front_image[0].file);
+          var res = await upload(formdata)
+          params.card_front_image = res.data.upload_path
 
-        let goods = this.itemList.map(item => {
-          delete item.fileList
-          return item
-        })
-        let params = {
-          goods_info: goods
+          var res = await orderAddress(params)
         }
-        let res = await orderAdd(params)
+        this.$router.back()
         this.loading = false
-        this.itemList = [{ goods_image: '' }]
         Toast.success(res.msg)
       } catch (error) {
         this.loading = false

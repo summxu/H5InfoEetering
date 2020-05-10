@@ -70,3 +70,22 @@ export function order (params) {
     params
   })
 }
+
+// 上传收货信息
+export function orderAddress (data) {
+  return request({
+    url: '/api/User/orderAddress',
+    method: 'POST',
+    data
+  })
+}
+
+
+// 上传物流
+export function orderExpress (data) {
+  return request({
+    url: '/api/User/orderExpress',
+    method: 'POST',
+    data
+  })
+}
