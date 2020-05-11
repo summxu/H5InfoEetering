@@ -6,6 +6,25 @@
 <template>
   <div id="TaskAdd">
     <NavBar title="订单录入" @click-right="addParce" right-text="增加包裹" />
+    <!-- 遮罩 -->
+    <Overlay :show="show">
+      <div class="wrapper" @click.stop>
+        <p class="block-title">请选择运输方式：</p>
+        <div class="div">
+          <div class="block" @click="setExpress(1)">
+            <p class="block-text">海运</p>
+          </div>
+          <div class="block" @click="setExpress(2)">
+            <p class="block-text">空运</p>
+          </div>
+        </div>
+        <div class="notice">
+          <!-- <p class="notice-text">海运禁运：啊实打实的阿达阿松大阿松大阿萨大时代啊</p> -->
+          <!-- <p class="notice-text">空运禁运：啊实打实的阿达阿松大阿松大阿萨大时代啊</p> -->
+        </div>
+      </div>
+    </Overlay>
+
     <Form @submit="submit" @failed="failed">
       <CellGroup :border="true" v-for="(element,j) in parcelList" :key="j">
         <template #title>
@@ -51,7 +70,7 @@
                 round
               />
             </template>
-            <CellGroup title="货物信息">
+            <CellGroup>
               <Field
                 :value="item.goods_name"
                 :rules="[{ required:true, message: '请输入货物名称' }]"
@@ -142,6 +161,13 @@
           :rules="[{ required:true, message: '请输入收货地址' }]"
           v-model="shouhuo.address"
         />
+        <Field
+          clearable
+          label="身份证号码"
+          type="text"
+          :rules="[{ required:true, message: '请输入身份证号码' }]"
+          v-model="card_code"
+        />
       </CellGroup>
 
       <CellGroup title="身份证正面">
@@ -190,7 +216,8 @@ import {
   CollapseItem,
   Collapse,
   Dialog,
-  Form
+  Form,
+  Overlay
 } from 'vant';
 export default {
   name: 'TaskAdd',
@@ -206,15 +233,19 @@ export default {
     Collapse,
     Form,
     Select,
-    Option
+    Option,
+    Overlay
   },
   created () {
     this.goodsSearch()
   },
   data () {
     return {
+      show: true,
+      express_type: 1, // 1海运2空运
       active: 0,
       loading: false,
+      card_code: '',
       shouhuo: {
         person: '',
         phone: '',
@@ -224,11 +255,13 @@ export default {
       parcelList: [{
         activeName: 0,
         itemList: [{
-          goods_image: ''
+          goods_image: '',
+          fileList: []
         }],
       }],
       itemList: [{
-        goods_image: ''
+        goods_image: '',
+        fileList: []
       }],
       goods: [],
       options: [],
@@ -236,6 +269,11 @@ export default {
     }
   },
   methods: {
+    // 设置运输方式
+    setExpress (type) {
+      this.show = false
+      this.express_type = type
+    },
     /* 删除函数 */
     deleteFun () {
       this.$forceUpdate()
@@ -286,7 +324,8 @@ export default {
     addParce () {
       this.parcelList.push({
         itemList: [{
-          goods_image: ''
+          goods_image: '',
+          fileList: []
         }]
       })
     },
@@ -357,14 +396,14 @@ export default {
                 element.goods_image = tempURL
                 continue
               }
+              console.log(element)
+              let formdata = new FormData();
+              formdata.append("image", element.fileList[0].file);
+              const res = await upload(formdata)
+              // 图片地址赋值给相应的itemList
+              console.log(res.data.upload_path)
+              element.goods_image = res.data.upload_path
             }
-            console.log(element)
-            let formdata = new FormData();
-            formdata.append("image", element.fileList[0].file);
-            const res = await upload(formdata)
-            // 图片地址赋值给相应的itemList
-            console.log(res.data.upload_path)
-            element.goods_image = res.data.upload_path
           }
         }
 
@@ -377,6 +416,8 @@ export default {
           })
         })
         let params = {
+          card_code: this.card_code,
+          express_type: this.express_type,
           goods_info: goods,
           card_front_image: '',
           address: this.shouhuo.person + ' ' + this.shouhuo.phone + ' ' + this.shouhuo.address
@@ -396,7 +437,8 @@ export default {
         this.parcelList = [{
           activeName: 0,
           itemList: [{
-            goods_image: ''
+            goods_image: '',
+            fileList: []
           }],
         }]
         this.$router.push('order')

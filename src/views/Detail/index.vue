@@ -18,7 +18,7 @@
           :title="'货物'+(index+1)"
           :name="index"
         >
-          <CellGroup title="货物信息">
+          <CellGroup>
             <Cell :value="item.goods_name" title="货物名称" />
             <Cell title="规格/型号" :value="item.attribute" />
             <Cell title="数量" :value="item.count" />
@@ -59,6 +59,10 @@
     <CellGroup v-if="orderItem.status == 2" title="物流信息">
       <Field clearable label="快递单号" type="text" v-model="wuliu" />
     </CellGroup>
+    <p
+      v-if="orderItem.status == 2"
+      class="alert"
+    >{{`* 仓库收货地址：神户市中央区上筒井通4丁目1-11-201。 电话：070-4575-6264 收件人：ズイ（请在括号中备注您的微信号）`}}</p>
 
     <CellGroup v-if="orderItem.status == 1" title="收货信息">
       <Field clearable label="收货人" type="text" v-model="shouhuo.person" />
@@ -99,6 +103,7 @@
 <script>
 import { order, upload, orderAddress, orderExpress } from '@/axios/api'
 import { baseURL } from "@/axios/api.js";
+import { mapState } from "vuex";
 import {
   NavBar,
   Button,
@@ -132,7 +137,6 @@ export default {
     Field
   },
   created () {
-
     this.id = this.$route.params.id
     this.order()
   },
@@ -155,6 +159,9 @@ export default {
         address: ''
       }
     }
+  },
+  computed: {
+    ...mapState(['userInfo'])
   },
   methods: {
     /* 删除函数 */

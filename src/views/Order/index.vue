@@ -8,7 +8,12 @@
     <NavBar title="订单列表" />
     <div class="MyGoodsInner margin-top-up">
       <Tabs @change="tabChange" v-model="active">
-        <Tab v-for="(element,index) in tabs " :key="index" :title="element.title">
+        <Tab
+          :title-style="element.color&&'color:red'"
+          v-for="(element,index) in tabs "
+          :key="index"
+          :title="element.title"
+        >
           <DataList
             v-if="active == index"
             :refresh="refreshList"
@@ -79,7 +84,8 @@ export default {
         title: '已驳回',
         status: [1]
       }, {
-        title: '待发货',
+        title: '请发货',
+        color: true,
         status: [2]
       }, {
         title: '发货中',
