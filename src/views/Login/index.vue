@@ -278,11 +278,6 @@ export default {
           message: this.$t('login.phoneNumberNotEmpty'),
           duration: 800
         })
-      } else if (!this.phoneRegex(this.register_userName)) {
-        Toast({
-          message: this.$t('login.phoneNumberNotCorrect'),
-          duration: 800
-        })
       } else if (this.register_pwd.length < 0) {
         Toast({
           message: this.$t('login.passTip'),
