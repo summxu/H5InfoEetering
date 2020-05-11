@@ -59,8 +59,7 @@
               >
                 <template #input>
                   <i-select
-                    @on-query-change="setItem(item)"
-                    @on-open-change="onFocus"
+                    @on-open-change="onFocus($event,item)"
                     @on-change="onChange"
                     remote
                     filterable
@@ -307,12 +306,11 @@ export default {
         console.log(error);
       }
     },
-    setItem (item) {
-      this.tempItem = item
-    },
-    onFocus (is) {
+
+    onFocus (is, item) {
       if (is) {
         this.options = this.goods
+        this.tempItem = item
       }
     },
     onChange (val) {
@@ -320,9 +318,9 @@ export default {
       const tempGood = this.goods.find(item => item.goods_name == val)
       if (tempGood) {
         this.tempItem.text = val
-        this.tempItem.price = tempGood.id
+        this.tempItem.price = tempGood.price
         this.tempItem.attribute = tempGood.attribute
-        this.tempItem.count = tempGood.count
+        // this.tempItem.count = tempGood.count
         if (tempGood.goods_image) {
           this.tempItem.fileList = [{ url: baseURL + tempGood.goods_image }]
         } else {
