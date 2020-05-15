@@ -123,6 +123,8 @@
                   <span>RMB</span>
                 </template>
               </Field>
+
+              <Field clearable @blur="deleteFun" label="条形码" type="text" v-model="item.goods_code" />
             </CellGroup>
 
             <CellGroup title="货物图片（注：可不填写）">
