@@ -71,11 +71,7 @@
               />
             </template>
             <CellGroup>
-              <Field
-                :value="item.goods_name"
-                :rules="[{ required:true, message: '请输入货物名称' }]"
-                label="货物名称"
-              >
+              <Field clearable label="条形码" type="text" :value="item.goods_code">
                 <template #input>
                   <i-select
                     @on-open-change="onFocus($event,item)"
@@ -83,18 +79,23 @@
                     remote
                     filterable
                     :remote-method="selectBlur"
-                    v-model="item.goods_name"
+                    v-model="item.goods_code"
                   >
                     <i-option
-                      v-for="item in options"
+                      v-for="(item,index) in options"
                       :value="item.text"
-                      :key="item.text"
+                      :key="index"
                       :label="item.text"
                     >{{ item.text }}</i-option>
                   </i-select>
                 </template>
               </Field>
-
+              <Field
+                @blur="deleteFun"
+                v-model="item.goods_code"
+                :rules="[{ required:true, message: '请输入货物名称' }]"
+                label="货物名称"
+              />
               <Field
                 @blur="deleteFun"
                 clearable
@@ -123,8 +124,6 @@
                   <span>RMB</span>
                 </template>
               </Field>
-
-              <Field clearable @blur="deleteFun" label="条形码" type="text" v-model="item.goods_code" />
             </CellGroup>
 
             <CellGroup title="货物图片（注：可不填写）">
@@ -341,7 +340,7 @@ export default {
         let res = await goodsSearch()
         this.goods = res.data.map(item => ({
           ...item,
-          text: item.goods_name
+          text: item.goods_code // 筛选条形码
         }))
       } catch (error) {
         console.log(error);
@@ -355,8 +354,8 @@ export default {
       }
     },
     onChange (val) {
-      this.tempItem.goods_name = val
-      const tempGood = this.goods.find(item => item.goods_name == val)
+      this.tempItem.goods_code = val
+      const tempGood = this.goods.find(item => item.goods_code == val)
       if (tempGood) {
         this.tempItem.text = val
         this.tempItem.price = tempGood.price

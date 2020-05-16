@@ -19,6 +19,7 @@
           :name="index"
         >
           <CellGroup>
+            <Cell title="条形码" :value="item.goods_code" />
             <Cell :value="item.goods_name" title="货物名称" />
             <Cell title="规格/型号" :value="item.attribute" />
             <Cell title="数量" :value="item.count" />
@@ -28,7 +29,6 @@
                 <span>RMB</span>
               </template>
             </Cell>
-            <Cell title="条形码" :value="item.goods_code" />
             <Cell title="货物图片">
               <template #default>
                 <VanImage width="50" height="50" :src="item.goods_image" />
