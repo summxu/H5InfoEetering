@@ -92,7 +92,7 @@
               </Field>
               <Field
                 @blur="deleteFun"
-                v-model="item.goods_code"
+                v-model="item.goods_name"
                 :rules="[{ required:true, message: '请输入货物名称' }]"
                 label="货物名称"
               />
@@ -358,6 +358,7 @@ export default {
       const tempGood = this.goods.find(item => item.goods_code == val)
       if (tempGood) {
         this.tempItem.text = val
+        this.tempItem.goods_name = tempGood.goods_name
         this.tempItem.price = tempGood.price
         this.tempItem.attribute = tempGood.attribute
         // this.tempItem.count = tempGood.count
