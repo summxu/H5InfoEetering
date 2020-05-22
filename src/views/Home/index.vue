@@ -5,7 +5,8 @@
  -->
 <template>
   <div id="TaskAdd">
-    <NavBar title="订单录入" @click-right="addParce" right-text="增加包裹" />
+    <!-- <NavBar title="订单录入" @click-right="addParce" right-text="增加包裹" /> -->
+    <NavBar title="订单录入" />
     <!-- 遮罩 -->
     <Overlay :show="show">
       <div class="wrapper" @click.stop>
